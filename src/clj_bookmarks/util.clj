@@ -3,8 +3,8 @@
   (:require [clj-http.client :as http]
 	    [clojure.xml :as xml]
 	    [clojure.zip :as zip]
-	    [clojure.contrib.zip-filter.xml :as zf]
-	    [clojure.contrib.zip-filter :as zfilter]
+	    [clojure.data.zip.xml :as zf]
+	    [clojure.data.zip :as zfilter]
 	    [clojure.string :as string])
   (:import [java.util TimeZone Date]
 	   [java.text SimpleDateFormat]
@@ -65,4 +65,3 @@
   "Parse a space delimited string of tags into a vector."
   [input]
   (vec (string/split input #"\s")))
-

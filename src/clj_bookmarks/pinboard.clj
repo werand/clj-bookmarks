@@ -3,7 +3,7 @@
   [Pinboard API](http://pinboard.in/howto/#api)."
   (:use [clj-bookmarks core util])
   (:require [clj-http.client :as http]
-	    [clojure.contrib.zip-filter.xml :as zfx]
+	    [clojure.data.zip.xml :as zfx]
 	    [clj-bookmarks.delicious :as del]
 	    [clojure.string :as string])
   (:import [java.util TimeZone Date]
@@ -121,4 +121,3 @@
   Delicious API) is used."
   ([] (PinboardRSSService.))
   ([user passwd] (del/init-delicious *pb-base-api-url* user passwd)))
-

@@ -3,8 +3,8 @@
   [Delicious API](http://delicious.com)."
   (:use [clj-bookmarks core util])
   (:require [clj-http.client :as http]
-	    [clojure.contrib.zip-filter.xml :as zfx]
-	    [clojure.contrib.zip-filter :as zf]
+	    [clojure.data.zip.xml :as zfx]
+	    [clojure.data.zip :as zf]
 	    [clojure.string :as string])
   (:import [java.util Date Locale]
 	   [java.text SimpleDateFormat]))
@@ -177,7 +177,7 @@
       parse-update))
 
 ;; ## The DeliciousV1Service Record
-;; 
+;;
 ;; `DeliciousV1Service` implements the `AuthenticatedBookmarkService`
 ;; protocol for the Delicious v1 API. Requires authentication
 ;; (username, password).
@@ -299,4 +299,3 @@
   ([] nil)
   ([user passwd] (init-delicious *del-base-api-url* user passwd))
   ([endpoint user passwd] (DeliciousV1Service. endpoint user passwd)))
-
