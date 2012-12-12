@@ -6,6 +6,10 @@ A client library for for the bookmarking services
 access. In the former case the APIs do not allow as many features as
 in the latter one.
 
+## Build Status
+
+[![Build Status](https://travis-ci.org/terazini/clj-bookmarks.png)](https://travis-ci.org/terazini/clj-bookmarks)
+
 ## Usage
 
 The library offers a common APIs for the bookmarking services -- one

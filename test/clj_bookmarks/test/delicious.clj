@@ -1,11 +1,11 @@
 (ns clj-bookmarks.test.delicious
   (:use [clj-bookmarks delicious util] :reload
-	[midje.sweet])
+        [midje.sweet])
   (:import [java.util Date]))
 
 ;; Test data
 (def javadoc-posts
-     "
+  "
 <?xml version='1.0' encoding='UTF-8' ?>
 <posts user='jgre'>
   <post href='http://scala-tools.org/mvnsites-snapshots/liftweb/lift-base/lift-webkit/scaladocs/index.html' time='2009-12-17T19:36:45Z' description='Lift WebKit 1.1-SNAPSHOT API : net.liftweb.http.LiftRules' extended='' tag='javadoc scala lift' hash='55505d5e761702c83b8737fbdef13f5a' meta='84aaa77e9a746412bae39b8bfb1a684e'   />
@@ -15,34 +15,34 @@
 (fact
  (posts-all ...srv... {:tags "javadoc"}) =>
  (just [(contains {:url "http://java.sun.com/javase/6/docs/api/"
-		   :tags ["programming" "api" "java" "javadoc"]
-		   :hash "dfde7fa8611fb1176a1a13bb812f90d6"
-		   :meta "03bee7cc22b1fded570c0d5f98288e77"
-		   :desc "java.io (Java Platform SE 6)"})
-	;; XXX: testing the equality of dates is just too tedious
-	(contains {:url "http://scala-tools.org/mvnsites-snapshots/liftweb/lift-base/lift-webkit/scaladocs/index.html"})] :in-any-order)
+                   :tags ["programming" "api" "java" "javadoc"]
+                   :hash "dfde7fa8611fb1176a1a13bb812f90d6"
+                   :meta "03bee7cc22b1fded570c0d5f98288e77"
+                   :desc "java.io (Java Platform SE 6)"})
+        ;; XXX: testing the equality of dates is just too tedious
+        (contains {:url "http://scala-tools.org/mvnsites-snapshots/liftweb/lift-base/lift-webkit/scaladocs/index.html"})] :in-any-order)
  (provided
   (basic-auth-request ...srv... anything {:tag "javadoc"}) =>
   {:body javadoc-posts}))
 
 (fact
  (posts-all ...srv... {:tags ["javadoc" "programming"]
-		       ;; Jan 01 00:00:00 UTC 2009
-		       :fromdt (Date. 1230768000000)
-		       ;; Dec 31 00:00:00 UTC 2009
-		       :todt (Date. 1262217600000)
-		       :user "jgre"
-		       :offset 0
-		       :limit 5})
+                       ;; Jan 01 00:00:00 UTC 2009
+                       :fromdt (Date. 1230768000000)
+                       ;; Dec 31 00:00:00 UTC 2009
+                       :todt (Date. 1262217600000)
+                       :user "jgre"
+                       :offset 0
+                       :limit 5})
  =>
  (contains [(contains {:url "http://java.sun.com/javase/6/docs/api/"})])
  (provided
   (basic-auth-request ...srv... anything {:tag     "javadoc programming"
-					  :fromdt  "2009-01-01T00:00:00Z"
-					  :todt    "2009-12-31T00:00:00Z"
-					  :user    "jgre"
-					  :start   0
-					  :results 5})
+                                          :fromdt  "2009-01-01T00:00:00Z"
+                                          :todt    "2009-12-31T00:00:00Z"
+                                          :user    "jgre"
+                                          :start   0
+                                          :results 5})
   => {:body javadoc-posts}))
 
 (def done-xml "
@@ -64,19 +64,19 @@
 (def suggest-xml "
 <?xml version='1.0' encoding='UTF-8' ?>
 <suggested>
-	<popular>data</popular>
-	<popular>database</popular>
-	<popular>mapreduce</popular>
-	<recommended>hadoop</recommended>
-	<recommended>bigdata</recommended>
-	<recommended>data</recommended>
-	<recommended>mapreduce</recommended>
-	<recommended>database</recommended>
-	<recommended>storage</recommended>
-	<recommended>nosql</recommended>
-	<recommended>smaq</recommended>
-	<recommended>datamining</recommended>
-	<recommended>query</recommended>
+        <popular>data</popular>
+        <popular>database</popular>
+        <popular>mapreduce</popular>
+        <recommended>hadoop</recommended>
+        <recommended>bigdata</recommended>
+        <recommended>data</recommended>
+        <recommended>mapreduce</recommended>
+        <recommended>database</recommended>
+        <recommended>storage</recommended>
+        <recommended>nosql</recommended>
+        <recommended>smaq</recommended>
+        <recommended>datamining</recommended>
+        <recommended>query</recommended>
 </suggested>
 ")
 
@@ -143,9 +143,9 @@
 (fact
  (parse-rss-posts recent-xml) =>
  (just [(contains {:url "http://top-lists.info/top-40-exceptional-images-from-the-decay-photography-challenge"
-		   :desc "Top 40: Exceptional Images from the Decay Photography Challenge"
-		   :tags ["challenge" "decay" "photography" "top" "image" "photos" "images"]})
-	(contains {:url "http://mir.aculo.us/dom-monster/"})]))
+                   :desc "Top 40: Exceptional Images from the Decay Photography Challenge"
+                   :tags ["challenge" "decay" "photography" "top" "image" "photos" "images"]})
+        (contains {:url "http://mir.aculo.us/dom-monster/"})]))
 
 (fact
  ;; Dec 28 06:55:53 UTC 2010

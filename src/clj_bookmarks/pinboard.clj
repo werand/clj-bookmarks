@@ -3,20 +3,20 @@
   [Pinboard API](http://pinboard.in/howto/#api)."
   (:use [clj-bookmarks core util])
   (:require [clj-http.client :as http]
-	    [clojure.data.zip.xml :as zfx]
-	    [clj-bookmarks.delicious :as del]
-	    [clojure.string :as string])
+            [clojure.data.zip.xml :as zfx]
+            [clj-bookmarks.delicious :as del]
+            [clojure.string :as string])
   (:import [java.util TimeZone Date]
-	   [java.text SimpleDateFormat]))
+           [java.text SimpleDateFormat]))
 
-(def *pb-base-api-url* "https://api.pinboard.in/v1/")
+(def pb-base-api-url "https://api.pinboard.in/v1/")
 
 ;; ## The Pinboard RSS Feeds
 ;;
 ;; The functions here are responsible for getting data out of the
 ;; Pinboard RSS feeds.
 
-(def *pb-base-rss-url* "http://feeds.pinboard.in/rss/")
+(def pb-base-rss-url "http://feeds.pinboard.in/rss/")
 
 ;; ### Parser Functions
 
@@ -53,12 +53,12 @@
   * `dc:date`: this is parsed into a `Date` object and called `date`."
   [input]
   (zfx/xml-> (str->xmlzip input) :item
-	    (fn [loc] {:url (zfx/xml1-> loc :link zfx/text)
-		       :tags (parse-tags
-			      (zfx/xml1-> loc :dc:subject zfx/text))
-		       :desc (zfx/xml1-> loc :description zfx/text)
-		       :date (parse-rss-date
-			      (zfx/xml1-> loc :dc:date zfx/text))})))
+            (fn [loc] {:url (zfx/xml1-> loc :link zfx/text)
+                       :tags (parse-tags
+                              (zfx/xml1-> loc :dc:subject zfx/text))
+                       :desc (zfx/xml1-> loc :description zfx/text)
+                       :date (parse-rss-date
+                              (zfx/xml1-> loc :dc:date zfx/text))})))
 
 ;; ### Request Functions
 
@@ -68,7 +68,7 @@
   We send a GET request to `popular` and parse the response body into
   a seq of bookmarks."
   []
-  (-> (http/get (str *pb-base-rss-url* "popular/"))
+  (-> (http/get (str pb-base-rss-url "popular/"))
       :body
       parse-rss-posts))
 
@@ -78,7 +78,7 @@
   We send a GET request to `recent` and parse the response body into
   a seq of bookmarks."
   []
-  (-> (http/get (str *pb-base-rss-url* "recent/"))
+  (-> (http/get (str pb-base-rss-url "recent/"))
       :body
       parse-rss-posts))
 
@@ -92,12 +92,12 @@
   This function sends a GET request with the path `/u:USER/t:TAG/t:TAG`."
   [{:keys [tags user]}]
   (let [tags (if (string? tags) [tags] tags)
-	path (string/join "/" (filter (comp not nil?)
-				      (cons  (if user (str "u:" user))
-					     (map #(str "t:" %) tags))))]
-    (-> (http/get (str *pb-base-rss-url* path))
-	:body
-	parse-rss-posts)))
+        path (string/join "/" (filter (comp not nil?)
+                                      (cons  (if user (str "u:" user))
+                                             (map #(str "t:" %) tags))))]
+    (-> (http/get (str pb-base-rss-url path))
+        :body
+        parse-rss-posts)))
 
 ;; ## The PinboardRSSService Record
 ;;
@@ -120,4 +120,4 @@
   [API](http://pinboard.in/howto/#api) (which is modeled on the
   Delicious API) is used."
   ([] (PinboardRSSService.))
-  ([user passwd] (del/init-delicious *pb-base-api-url* user passwd)))
+  ([user passwd] (del/init-delicious pb-base-api-url user passwd)))

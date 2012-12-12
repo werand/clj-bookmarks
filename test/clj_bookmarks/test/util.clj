@@ -1,6 +1,6 @@
 (ns clj-bookmarks.test.util
   (:use [clj-bookmarks.util] :reload
-	[midje.sweet])
+        [midje.sweet])
   (:import [java.util Date]))
 
 (fact
@@ -12,4 +12,3 @@
        dstr "2011-01-02T13:09:24Z"]
    (format-date d) => dstr
    (format-date (parse-date dstr)) => dstr))
-

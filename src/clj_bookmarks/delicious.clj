@@ -3,11 +3,11 @@
   [Delicious API](http://delicious.com)."
   (:use [clj-bookmarks core util])
   (:require [clj-http.client :as http]
-	    [clojure.data.zip.xml :as zfx]
-	    [clojure.data.zip :as zf]
-	    [clojure.string :as string])
+            [clojure.data.zip.xml :as zfx]
+            [clojure.data.zip :as zf]
+            [clojure.string :as string])
   (:import [java.util Date Locale]
-	   [java.text SimpleDateFormat]))
+           [java.text SimpleDateFormat]))
 
 ;; ## The Delicious v1 API
 ;;
@@ -27,13 +27,13 @@
   the `post` elements."
   [input]
   (zfx/xml-> (str->xmlzip input) :post
-	    (fn [loc] {:url (zfx/attr loc :href)
-		       :tags (parse-tags (zfx/attr loc :tag))
-		       :hash (zfx/attr loc :hash)
-		       :meta (zfx/attr loc :meta)
-		       :desc (zfx/attr loc :description)
-		       :extended (zfx/attr loc :extended)
-		       :date (parse-date (zfx/attr loc :time))})))
+            (fn [loc] {:url (zfx/attr loc :href)
+                       :tags (parse-tags (zfx/attr loc :tag))
+                       :hash (zfx/attr loc :hash)
+                       :meta (zfx/attr loc :meta)
+                       :desc (zfx/attr loc :description)
+                       :extended (zfx/attr loc :extended)
+                       :date (parse-date (zfx/attr loc :time))})))
 
 (defn parse-result
   "Parse a string of XML data with a response code from the Delicious
@@ -89,17 +89,17 @@
   structures."
   [{:keys [endpoint] :as srv} opts]
   (letfn [(opt->param
-	   [[k v]]
-	   (cond
-	    (= k :tags) [:tag (if (coll? v) (string/join " " v) v)]
-	    (= k :limit)          [:results v]
-	    (= k :offset)         [:start v]
-	    (isa? (class v) Date) [k (format-date v)]
-	    :else [k v]))]
+           [[k v]]
+           (cond
+            (= k :tags) [:tag (if (coll? v) (string/join " " v) v)]
+            (= k :limit)          [:results v]
+            (= k :offset)         [:start v]
+            (isa? (class v) Date) [k (format-date v)]
+            :else [k v]))]
     (let [params (into {} (map opt->param opts))]
       (-> (basic-auth-request srv (str endpoint "posts/all") params)
-	  :body
-	  (parse-posts)))))
+          :body
+          (parse-posts)))))
 
 (defn posts-add
   "Send a GET request to add a new bookmark with the Delicious v1 API.
@@ -115,18 +115,18 @@
   [{:keys [endpoint] :as srv}
   url desc opts]
   (letfn [(opt->param
-	   [[k v]]
-	   (cond
-	    (= k :tags) [:tags (if (coll? v) (string/join " " v) v)]
-	    (isa? (class v) Date) [k (format-date v)]
-	    (= k :shared)  [:shared  (if v "yes" "no")]
-	    (= k :replace) [:replace (if v "yes" "no")]
-	    :else [k v]))]
+           [[k v]]
+           (cond
+            (= k :tags) [:tags (if (coll? v) (string/join " " v) v)]
+            (isa? (class v) Date) [k (format-date v)]
+            (= k :shared)  [:shared  (if v "yes" "no")]
+            (= k :replace) [:replace (if v "yes" "no")]
+            :else [k v]))]
     (let [params
-	  (into {:url url :description desc} (map opt->param opts))]
+          (into {:url url :description desc} (map opt->param opts))]
       (-> (basic-auth-request srv (str endpoint "posts/add") params)
-	  :body
-	  parse-result))))
+          :body
+          parse-result))))
 
 (defn posts-get
   "Get the bookmark structure for `url`.
@@ -149,7 +149,7 @@
   worked and throw an exception otherwise."
   [{:keys [endpoint] :as srv} url]
   (-> (basic-auth-request srv
-			  (str endpoint "posts/delete") {:url url})
+                          (str endpoint "posts/delete") {:url url})
       :body
       parse-result))
 
@@ -161,7 +161,7 @@
   `posts/suggest`and parse the result body to get the seq of tags."
   [{:keys [endpoint] :as srv} url]
   (-> (basic-auth-request srv
-			  (str endpoint "posts/suggest") {:url url})
+                          (str endpoint "posts/suggest") {:url url})
       :body
       parse-suggestions))
 
@@ -198,7 +198,7 @@
 ;; The functions here are responsible for getting data out of the
 ;; Delicious RSS feeds.
 
-(def *del-base-rss-url* "http://feeds.delicious.com/v2/rss/")
+(def del-base-rss-url "http://feeds.delicious.com/v2/rss/")
 
 ;; ### Parser Functions
 
@@ -229,12 +229,12 @@
   * `pubDate`: this is parsed into a `Date` object and called `date`."
   [input]
   (zfx/xml-> (str->xmlzip input) :channel :item
-	     (fn [loc] {:url (zfx/xml1-> loc :link zfx/text)
-			:tags (vec
-			       (zfx/xml-> loc :category zfx/text))
-			:desc (zfx/xml1-> loc :title zfx/text)
-			:date (parse-rss-date
-				  (zfx/xml1-> loc :pubDate zfx/text))})))
+             (fn [loc] {:url (zfx/xml1-> loc :link zfx/text)
+                        :tags (vec
+                               (zfx/xml-> loc :category zfx/text))
+                        :desc (zfx/xml1-> loc :title zfx/text)
+                        :date (parse-rss-date
+                                  (zfx/xml1-> loc :pubDate zfx/text))})))
 
 ;; ### Request Functions
 
@@ -244,7 +244,7 @@
   We send a GET request to `popular` and parse the response body into
   a seq of bookmarks."
   []
-  (-> (http/get (str *del-base-rss-url* "popular/"))
+  (-> (http/get (str del-base-rss-url "popular/"))
       :body
       parse-rss-posts))
 
@@ -254,7 +254,7 @@
   We send a GET request to `recent` and parse the response body into
   a seq of bookmarks."
   []
-  (-> (http/get (str *del-base-rss-url* "recent/"))
+  (-> (http/get (str del-base-rss-url "recent/"))
       :body
       parse-rss-posts))
 
@@ -269,11 +269,11 @@
   `/tag/TAG+TAG` when no user is specified."
   [{:keys [tags user]}]
   (let [tags (if (string? tags) tags (string/join "+" tags))
-	path (string/join "/" (filter (comp not string/blank?)
-				      [(or user "tag") tags]))]
-    (-> (http/get (str *del-base-rss-url* path))
-	:body
-	parse-rss-posts)))
+        path (string/join "/" (filter (comp not string/blank?)
+                                      [(or user "tag") tags]))]
+    (-> (http/get (str del-base-rss-url path))
+        :body
+        parse-rss-posts)))
 
 ;; ## The DeliciousRSSService Record
 ;;
@@ -286,7 +286,7 @@
   (popular [srv] (rss-popular))
   (recent [srv] (rss-recent)))
 
-(def *del-base-api-url* "https://api.del.icio.us/v1/")
+(def del-base-api-url "https://api.del.icio.us/v1/")
 
 (defn init-delicious
   "Create a service handle for [Delicious](http://delicious.com).
@@ -297,5 +297,5 @@
   When you pass a username and password, the full
   [API](http://www.delicious.com/help/api) is used."
   ([] nil)
-  ([user passwd] (init-delicious *del-base-api-url* user passwd))
+  ([user passwd] (init-delicious del-base-api-url user passwd))
   ([endpoint user passwd] (DeliciousV1Service. endpoint user passwd)))
