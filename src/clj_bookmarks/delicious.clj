@@ -225,12 +225,8 @@
   (bookmark-info [srv url] (posts-get srv url))
   (delete-bookmark [srv url] (posts-delete srv url))
   (suggested-tags [srv url] (posts-suggest srv url))
-  (last-update [srv] (posts-update srv))
-  (get-tags [srv] (tags-get srv))
-  (rename-tag [srv old new] (tag-rename srv old new)))
+  (last-update [srv] (posts-update srv)))
 
-#_(rename-tag pbsession "" "")
-#_(def pbsession (clj-bookmarks.pinboard/init-pinboard "8331337" ""))
 
 ;; ## The Delicious RSS Feeds
 ;;

@@ -3,6 +3,7 @@
   [Pinboard API](http://pinboard.in/howto/#api)."
   (:use [clj-bookmarks core util])
   (:require [clj-http.client :as http]
+            [clojure.data.zip :as zf]
             [clojure.data.zip.xml :as zfx]
             [clj-bookmarks.delicious :as del]
             [clojure.string :as string])
@@ -110,6 +111,48 @@
   (popular [srv] (rss-popular))
   (recent [srv] (rss-recent)))
 
+
+(defn parse-pinboard-tags
+  "Parse a string of XML data into a seq of tags.
+
+  We turn the data into a zipper and get the text of all leaf nodes."
+  [input]
+  (zfx/xml-> (str->xmlzip input) zf/children :tag (zfx/attr :tag)))
+
+(defn parse-tag-result
+  "Parse a string of XML data with a response code from the Delicious
+  v1 API and either return true or throw an exception.
+
+  The function returns true, when the `code` attribute equals
+  `done`. Otherwise a exception is thrown with the code as message."
+  [input]
+  (let [code (zfx/xml1-> (str->xmlzip input) zfx/text)]
+    (if-not (= code "done")
+      ; FIXME a better error concept, maybe?
+      (throw (Exception. code))
+      true)))
+
+(defn tags-get
+  ""
+  [{:keys [endpoint] :as srv}]
+  (-> (basic-auth-request srv (str endpoint "tags/get") {})
+    :body
+    parse-pinboard-tags))
+
+(defn tag-rename
+  ""
+  [{:keys [endpoint] :as srv} old new]
+    (-> (basic-auth-request srv (str endpoint "tags/rename") {:old old :new new})
+      :body
+      parse-tag-result))
+  
+
+(extend clj_bookmarks.delicious.DeliciousV1Service
+  AuthenticatedExtendedPinboardAPI
+  {:get-tags (fn [srv] (tags-get srv))
+   :rename-tag (fn [srv old new] (tag-rename srv old new))})
+
+
 (defn init-pinboard
   "Create a service handle for [Pinboard](http://pinboard.in).
 
@@ -121,3 +164,4 @@
   Delicious API) is used."
   ([] (PinboardRSSService.))
   ([user passwd] (del/init-delicious pb-base-api-url user passwd)))
+
