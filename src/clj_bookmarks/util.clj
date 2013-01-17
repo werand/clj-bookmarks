@@ -57,9 +57,10 @@
   The first argument is a map with the keys `user` and `passwd` used
   for the authentication (usually the service handle records are used
   here)."
-  [{:keys [user passwd]} url params]
-  (http/get url {:query-params params
-		 :basic-auth [user passwd]}))
+  [{:keys [user passwd auth-token]} url params]
+  (if (nil? auth-token)
+    (http/get url {:query-params params :basic-auth [user passwd]})
+    (http/get url {:query-params (assoc params "auth_token" auth-token)})))
 
 (defn parse-tags
   "Parse a space delimited string of tags into a vector."

@@ -218,7 +218,8 @@
 ;;
 ;; Internally the implementation is delegated to the functions above.
 
-(defrecord DeliciousV1Service [endpoint user passwd]
+;; The authentication-token can only be used for the pinboard-API
+(defrecord DeliciousV1Service [endpoint user passwd auth-token]
   AuthenticatedBookmarkService
   (query-bookmarks [srv opts] (posts-all srv opts))
   (add-bookmark [srv url desc opts] (posts-add srv url desc opts))
@@ -333,4 +334,4 @@
   [API](http://www.delicious.com/help/api) is used."
   ([] nil)
   ([user passwd] (init-delicious del-base-api-url user passwd))
-  ([endpoint user passwd] (DeliciousV1Service. endpoint user passwd)))
+  ([endpoint user passwd] (DeliciousV1Service. endpoint user passwd "")))
