@@ -68,7 +68,12 @@
                  structure for `url`.")
   (last-update [srv]
                 "Use `last-update` to find the timestamp when the user
-                last updated his bookmarks."))
+                last updated his bookmarks.")
+  ;; Pinboard specific API
+  (get-tags [srv]
+    "Returns a full list of the user's tags along with the number of times they were used.")
+  (rename-tag [srv old new]
+    "Rename an tag, or fold it in to an existing tag"))
 
 ;; ## The Bookmark Structure
 ;;

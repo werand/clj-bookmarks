@@ -48,12 +48,32 @@
       (throw (Exception. code))
       true)))
 
+(defn parse-tag-result
+  "Parse a string of XML data with a response code from the Delicious
+  v1 API and either return true or throw an exception.
+
+  The function returns true, when the `code` attribute equals
+  `done`. Otherwise a exception is thrown with the code as message."
+  [input]
+  (let [code (zfx/xml1-> (str->xmlzip input) zfx/text)]
+    (if-not (= code "done")
+      ; FIXME a better error concept, maybe?
+      (throw (Exception. code))
+      true)))
+
 (defn parse-suggestions
   "Parse a string of XML data into a seq of tags.
 
   We turn the data into a zipper and get the text of all leaf nodes."
   [input]
   (zfx/xml-> (str->xmlzip input) zf/children zfx/text))
+
+(defn parse-pinboard-tags
+  "Parse a string of XML data into a seq of tags.
+
+  We turn the data into a zipper and get the text of all leaf nodes."
+  [input]
+  (zfx/xml-> (str->xmlzip input) zf/children :tag (zfx/attr :tag)))
 
 (defn parse-update
   "Parse a string of XML data into the date of the last modification.
@@ -176,6 +196,20 @@
       :body
       parse-update))
 
+(defn tags-get
+  ""
+  [{:keys [endpoint] :as srv}]
+  (-> (basic-auth-request srv (str endpoint "tags/get") {})
+    :body
+    parse-pinboard-tags))
+
+(defn tag-rename
+  ""
+  [{:keys [endpoint] :as srv} old new]
+    (-> (basic-auth-request srv (str endpoint "tags/rename") {:old old :new new})
+      :body
+      parse-tag-result))
+  
 ;; ## The DeliciousV1Service Record
 ;;
 ;; `DeliciousV1Service` implements the `AuthenticatedBookmarkService`
@@ -191,7 +225,12 @@
   (bookmark-info [srv url] (posts-get srv url))
   (delete-bookmark [srv url] (posts-delete srv url))
   (suggested-tags [srv url] (posts-suggest srv url))
-  (last-update [srv] (posts-update srv)))
+  (last-update [srv] (posts-update srv))
+  (get-tags [srv] (tags-get srv))
+  (rename-tag [srv old new] (tag-rename srv old new)))
+
+#_(rename-tag pbsession "" "")
+#_(def pbsession (clj-bookmarks.pinboard/init-pinboard "8331337" ""))
 
 ;; ## The Delicious RSS Feeds
 ;;
