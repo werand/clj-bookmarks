@@ -334,4 +334,4 @@
   [API](http://www.delicious.com/help/api) is used."
   ([] nil)
   ([user passwd] (init-delicious del-base-api-url user passwd))
-  ([endpoint user passwd] (DeliciousV1Service. endpoint user passwd "")))
+  ([endpoint user passwd] (DeliciousV1Service. endpoint user passwd nil)))

@@ -145,7 +145,9 @@
     (-> (basic-auth-request srv (str endpoint "tags/rename") {:old old :new new})
       :body
       parse-tag-result))
-  
+
+
+;; The Pinboard API has some more features
 
 (extend clj_bookmarks.delicious.DeliciousV1Service
   AuthenticatedExtendedPinboardAPI
@@ -163,6 +165,5 @@
   [API](http://pinboard.in/howto/#api) (which is modeled on the
   Delicious API) is used."
   ([] (PinboardRSSService.))
-  ([authentication-token] (clj_bookmarks.delicious.DeliciousV1Service. pb-base-api-url nil nil authentication-token))
+  ([auth-token] (clj_bookmarks.delicious.DeliciousV1Service. pb-base-api-url nil nil auth-token))
   ([user passwd] (del/init-delicious pb-base-api-url user passwd)))
-

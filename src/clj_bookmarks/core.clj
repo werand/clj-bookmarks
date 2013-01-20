@@ -76,7 +76,13 @@
   (get-tags [srv]
     "Returns a full list of the user's tags along with the number of times they were used.")
   (rename-tag [srv old new]
-    "Rename an tag, or fold it in to an existing tag"))
+    "Rename an tag, or fold it in to an existing tag.")
+  (delete-tag [srv tag]
+    "Delete an existing tag.")
+  (list-notes [srv]
+    "Returns a list of the user's notes.")
+  (get-note [srv id]
+    "Returns an individual user note. The hash property is a 20 character long sha1 hash of the note text."))
 
 ;; ## The Bookmark Structure
 ;;
