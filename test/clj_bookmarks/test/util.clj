@@ -12,3 +12,36 @@
        dstr "2011-01-02T13:09:24Z"]
    (format-date d) => dstr
    (format-date (parse-date dstr)) => dstr))
+
+(fact
+  ;; Test for the basic-auth to still work as expected for the standard case
+  (basic-auth-request  anything ...url... ...params...)
+  =>
+  (contains {:status 202})
+  (provided
+    (clj-http.client/get ...url... anything)
+    => {:status 202
+        :body "test"}))
+
+(fact
+  ;; Test the retry of the last action in case the too-many-requests error is raised
+  (basic-auth-request-with-retry anything ...url... ...params... 1 0)
+  =>
+  (throws Exception "clj-http: status 429")
+  (provided
+    (clj-http.client/get ...url... anything)
+    => {:status 429
+        :body "test"}))
+
+(fact
+  ;; Test the wait interval doubling for the retries
+  (basic-auth-request-with-retry anything ...url... ...params... 1 5)
+  =>
+  (throws Exception "clj-http: status 429")
+  (provided
+    (clj-http.client/get ...url... anything) => {:status 429 :body "test"}
+    (sleep 1) => nil
+    (sleep 2) => nil
+    (sleep 4) => nil
+    (sleep 8) => nil
+    (sleep 16) => nil))

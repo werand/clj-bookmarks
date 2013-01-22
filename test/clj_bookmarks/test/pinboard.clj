@@ -59,3 +59,7 @@
 (fact
  ;; Dec 28 06:55:53 UTC 2010
  (.getTime (parse-rss-date "2010-12-28T06:55:53+00:00")) => 1293519353000)
+
+
+;; Tests for the new methods
+

@@ -50,6 +50,32 @@
   [input]
   (.parse (date-format) input))
 
+(defn too-many-requests?
+  [{:keys [status]}]
+  (= 429 status))
+
+(defn sleep [secs]
+  (Thread/sleep (* secs 1000)))
+
+(defn basic-auth-request-with-retry
+  "Send an HTTP GET request using basic authentication to the given
+  URL to which `params` get attached.
+
+  The first argument is a map with the keys `user` and `passwd` used
+  for the authentication (usually the service handle records are used
+  here)."
+  [{:keys [user passwd auth-token] :as srv} url params retry-interval retries]
+  (let [response  (if (nil? auth-token)
+                    (http/get url {:query-params params :basic-auth [user passwd] :throw-exceptions false})
+                    (http/get url {:query-params (assoc params "auth_token" auth-token) :throw-exceptions false}))]
+    (if (http/success? response)
+      response
+      (if (and (too-many-requests? response) (> retries 0))
+        (do
+          (sleep retry-interval)
+          (basic-auth-request-with-retry srv url params (* 2 retry-interval) (dec retries)))
+        (throw (Exception. (str "clj-http: status " (:status response))))))))
+
 (defn basic-auth-request
   "Send an HTTP GET request using basic authentication to the given
   URL to which `params` get attached.
@@ -57,10 +83,8 @@
   The first argument is a map with the keys `user` and `passwd` used
   for the authentication (usually the service handle records are used
   here)."
-  [{:keys [user passwd auth-token]} url params]
-  (if (nil? auth-token)
-    (http/get url {:query-params params :basic-auth [user passwd]})
-    (http/get url {:query-params (assoc params "auth_token" auth-token)})))
+  [srv url params]
+    (basic-auth-request-with-retry srv url params 3 5))
 
 (defn parse-tags
   "Parse a space delimited string of tags into a vector."
