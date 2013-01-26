@@ -69,7 +69,7 @@
   #_(println auth-token)
   (let [response  (if (nil? auth-token)
                     (http/get url {:query-params params :basic-auth [user passwd] :throw-exceptions false})
-                    (http/get url {:query-params (assoc params "auth_token" auth-token) :throw-exceptions false ::debug-body true}))]
+                    (http/get url {:query-params (assoc params "auth_token" auth-token) :throw-exceptions false}))]
     (if (http/success? response)
       response
       (if (and (too-many-requests? response) (> retries 0))
