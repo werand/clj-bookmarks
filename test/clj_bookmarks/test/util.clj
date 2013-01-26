@@ -11,7 +11,7 @@
  (let [d (Date. 1293973764173)
        dstr "2011-01-02T13:09:24Z"]
    (format-date d) => dstr
-   (format-date (parse-date dstr)) => dstr))
+   (format-date (parse-date date-format dstr)) => dstr))
 
 (fact
   ;; Test for the basic-auth to still work as expected for the standard case
@@ -45,3 +45,13 @@
     (sleep 4) => nil
     (sleep 8) => nil
     (sleep 16) => nil))
+
+(fact
+  ;; Test that other errors are reported immediately
+  (basic-auth-request-with-retry anything ...url... ...params... 1 5)
+  =>
+  (throws Exception "clj-http: status 500")
+  (provided
+    (clj-http.client/get ...url... anything)
+    => {:status 500
+        :body "test"}))

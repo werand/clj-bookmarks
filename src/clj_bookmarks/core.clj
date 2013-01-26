@@ -82,7 +82,7 @@
   (list-notes [srv]
     "Returns a list of the user's notes.")
   (get-note [srv id]
-    "Returns an individual user note. The hash property is a 20 character long sha1 hash of the note text."))
+    "Returns an individual user note. The id property is a 20 character long sha1 hash of the note text."))
 
 ;; ## The Bookmark Structure
 ;;

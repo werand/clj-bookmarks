@@ -33,7 +33,7 @@
                        :meta (zfx/attr loc :meta)
                        :desc (zfx/attr loc :description)
                        :extended (zfx/attr loc :extended)
-                       :date (parse-date (zfx/attr loc :time))})))
+                       :date (parse-date date-format (zfx/attr loc :time))})))
 
 (defn parse-result
   "Parse a string of XML data with a response code from the Delicious
@@ -43,19 +43,6 @@
   `done`. Otherwise a exception is thrown with the code as message."
   [input]
   (let [code (zfx/xml1-> (str->xmlzip input) (zfx/attr :code))]
-    (if-not (= code "done")
-      ; FIXME a better error concept, maybe?
-      (throw (Exception. code))
-      true)))
-
-(defn parse-tag-result
-  "Parse a string of XML data with a response code from the Delicious
-  v1 API and either return true or throw an exception.
-
-  The function returns true, when the `code` attribute equals
-  `done`. Otherwise a exception is thrown with the code as message."
-  [input]
-  (let [code (zfx/xml1-> (str->xmlzip input) zfx/text)]
     (if-not (= code "done")
       ; FIXME a better error concept, maybe?
       (throw (Exception. code))
@@ -81,7 +68,7 @@
   We turn the input into a zipper and parse the date from the `time`
   attribute."
   [input]
-  (parse-date (zfx/xml1-> (str->xmlzip input) (zfx/attr :time))))
+  (parse-date date-format (zfx/xml1-> (str->xmlzip input) (zfx/attr :time))))
 
 ;; ### Request Functions
 ;;
@@ -196,20 +183,6 @@
       :body
       parse-update))
 
-(defn tags-get
-  ""
-  [{:keys [endpoint] :as srv}]
-  (-> (basic-auth-request srv (str endpoint "tags/get") {})
-    :body
-    parse-pinboard-tags))
-
-(defn tag-rename
-  ""
-  [{:keys [endpoint] :as srv} old new]
-    (-> (basic-auth-request srv (str endpoint "tags/rename") {:old old :new new})
-      :body
-      parse-tag-result))
-  
 ;; ## The DeliciousV1Service Record
 ;;
 ;; `DeliciousV1Service` implements the `AuthenticatedBookmarkService`

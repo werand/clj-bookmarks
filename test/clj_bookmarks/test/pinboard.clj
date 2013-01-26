@@ -1,5 +1,5 @@
 (ns clj-bookmarks.test.pinboard
-  (:use [clj-bookmarks.pinboard] :reload
+  (:use [clj-bookmarks pinboard util] :reload
 	[midje.sweet])
   (:import [java.util Date]))
 
@@ -58,8 +58,24 @@
 
 (fact
  ;; Dec 28 06:55:53 UTC 2010
- (.getTime (parse-rss-date "2010-12-28T06:55:53+00:00")) => 1293519353000)
+ (.getTime (parse-date rss-date-format "2010-12-28T06:55:53+00:00")) => 1293519353000)
 
 
-;; Tests for the new methods
+;; Tests for the extended pinboard methods
 
+(def a-note "
+<?xml version='1.0' encoding='UTF-8' ?>
+<note id='b71145a1731695b4ee23'>
+    <hash>230c1b958ba91ab37a68</hash>
+    <length>19</length>
+    A somewhat longer title - at least a little longer!
+    <text><![CDATA[test test test test]]></text>
+</note>")
+
+(fact
+  (parse-pinboard-note a-note) =>
+  [{:title "A somewhat longer title - at least a little longer!"
+   :id "b71145a1731695b4ee23"
+   :hash "230c1b958ba91ab37a68"
+   :length "19"
+   :text "test test test test"}])

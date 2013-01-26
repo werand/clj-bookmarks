@@ -32,15 +32,24 @@
   In the feed there is an appended `+00:00`, but we could only parse
   either `GMT+00:00` or `+0000`."
   []
-  (doto (SimpleDateFormat. "yyyy-MM-dd'T'HH:mm:ss")
+  (doto 
+    (SimpleDateFormat. "yyyy-MM-dd'T'HH:mm:ss")
     (.setTimeZone (TimeZone/getTimeZone "UTC"))))
 
-(defn parse-rss-date
-  "Parse a date string in the format used by the Pinboard RSS feeds
-  into a `Date` object."
-  [input]
-  (.parse (rss-date-format) input))
+(defn notes-date-format
+  "Create a `SimpleDateFormat` object for the format used by the
+  Pinboard Notes feeds.
 
+  The format object needs to be set to the UTC timezone, otherwise it
+  would use the default timezone of the current machine. The dates in
+  the RSS do provide a timezone, but it is always UTC and it is
+  formatted in a way that `SimpleDateFormat` does not seem to support:
+  In the feed there is an appended `+00:00`, but we could only parse
+  either `GMT+00:00` or `+0000`."
+  []
+  (doto 
+    (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss")
+    (.setTimeZone (TimeZone/getTimeZone "UTC"))))
 
 (defn parse-rss-posts
   "Parse a string of RSS data from Pinboard into a list of posts.
@@ -58,7 +67,7 @@
                        :tags (parse-tags
                               (zfx/xml1-> loc :dc:subject zfx/text))
                        :desc (zfx/xml1-> loc :description zfx/text)
-                       :date (parse-rss-date
+                       :date (parse-date rss-date-format
                               (zfx/xml1-> loc :dc:date zfx/text))})))
 
 ;; ### Request Functions
@@ -111,13 +120,48 @@
   (popular [srv] (rss-popular))
   (recent [srv] (rss-recent)))
 
-
 (defn parse-pinboard-tags
   "Parse a string of XML data into a seq of tags.
 
   We turn the data into a zipper and get the text of all leaf nodes."
   [input]
   (zfx/xml-> (str->xmlzip input) zf/children :tag (zfx/attr :tag)))
+
+(defn parse-pinboard-notes
+  "Parse a string of XML data into a seq of tags.
+
+  We turn the data into a zipper and get the text of all leaf nodes."
+  [input]
+  (zfx/xml-> (str->xmlzip input)
+             :note
+             (fn [loc] {:id (zfx/attr loc :id)
+                        :title (zfx/xml1-> loc :title zfx/text)
+                        :hash (zfx/xml1-> loc :hash zfx/text)
+                        :created (parse-date notes-date-format
+                                   (zfx/xml1-> loc :created_at zfx/text))
+                        :updated (parse-date notes-date-format
+                                   (zfx/xml1-> loc :updated_at zfx/text))
+                        :length (zfx/xml1-> loc :length zfx/text)})))
+
+(defn parse-pinboard-note
+  "Parse a string of XML data into a seq of tags.
+
+  We turn the data into a zipper and get the text of all leaf nodes.
+  The title has no tag, it is embedded within the content of the note."
+  [input]
+  (zfx/xml-> (str->xmlzip input)
+             (fn [loc]
+               (let [id (zfx/attr loc :id)
+                     hash (zfx/xml1-> loc :hash zfx/text)
+                     text (zfx/xml1-> loc :text zfx/text)
+                     length (zfx/xml1-> loc :length zfx/text)
+                     ititle (zfx/text loc)]
+                  {:id id
+                   :hash hash
+                   :text text
+                   :length length
+                   ;; Since the title is embedded we have to extract it from the note text
+                   :title (.trim (.substring ititle (.length (str hash length)) (- (.length ititle) (.length text))))}))))
 
 (defn parse-tag-result
   "Parse a string of XML data with a response code from the Delicious
@@ -133,27 +177,50 @@
       true)))
 
 (defn tags-get
-  ""
+  "Returns a full list of the user's tags along with the number of times they were used."
   [{:keys [endpoint] :as srv}]
   (-> (basic-auth-request srv (str endpoint "tags/get") {})
     :body
     parse-pinboard-tags))
 
 (defn tag-rename
-  ""
+  "Rename an tag, or fold it in to an existing tag."
   [{:keys [endpoint] :as srv} old new]
-    (-> (basic-auth-request srv (str endpoint "tags/rename") {:old old :new new})
-      :body
-      parse-tag-result))
+  (-> (basic-auth-request srv (str endpoint "tags/rename") {:old old :new new})
+    :body
+    parse-tag-result))
 
+(defn tag-delete
+  "Delete an existing tag."
+  [{:keys [endpoint] :as srv} tag]
+  (-> (basic-auth-request srv (str endpoint "tags/delete") {:tag tag})
+    :body
+    ;; Currently pinboard does not return a valid xml string!! Therfore the response is not evaluated.
+    ))
 
-;; The Pinboard API has some more features
+(defn notes-list
+  "Returns a list of the user's notes."
+  [{:keys [endpoint] :as srv}]
+  (-> (basic-auth-request srv (str endpoint "notes/list") {})
+    :body
+    parse-pinboard-notes))
+
+(defn note-get
+  "Returns an individual user note. The id property is a 20 character long sha1 hash of the note text."
+  [{:keys [endpoint] :as srv} id]
+  (-> (basic-auth-request srv (str endpoint (str "notes/" id "/")) {})
+    :body
+    parse-pinboard-note))
+
+;; The Pinboard API has some more features, they are added here
 
 (extend clj_bookmarks.delicious.DeliciousV1Service
   AuthenticatedExtendedPinboardAPI
   {:get-tags (fn [srv] (tags-get srv))
-   :rename-tag (fn [srv old new] (tag-rename srv old new))})
-
+   :rename-tag (fn [srv old new] (tag-rename srv old new))
+   :list-notes (fn [srv] (notes-list srv))
+   :get-note (fn [srv id] (note-get srv id))
+   :delete-tag (fn [srv tag] (tag-delete srv tag))})
 
 (defn init-pinboard
   "Create a service handle for [Pinboard](http://pinboard.in).
@@ -163,7 +230,10 @@
 
   When you pass a username and password, the
   [API](http://pinboard.in/howto/#api) (which is modeled on the
-  Delicious API) is used."
+  Delicious API) is used.
+
+  When you pass the auth-token, the pinboard authentication token
+  is used."
   ([] (PinboardRSSService.))
   ([auth-token] (clj_bookmarks.delicious.DeliciousV1Service. pb-base-api-url nil nil auth-token))
   ([user passwd] (del/init-delicious pb-base-api-url user passwd)))

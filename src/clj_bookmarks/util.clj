@@ -47,7 +47,7 @@
 (defn parse-date
   "Parse a date string in the format used by the Delicious v1 API into
   a `Date` object."
-  [input]
+  [date-format input]
   (.parse (date-format) input))
 
 (defn too-many-requests?
@@ -65,9 +65,11 @@
   for the authentication (usually the service handle records are used
   here)."
   [{:keys [user passwd auth-token] :as srv} url params retry-interval retries]
+  #_(println url)
+  #_(println auth-token)
   (let [response  (if (nil? auth-token)
                     (http/get url {:query-params params :basic-auth [user passwd] :throw-exceptions false})
-                    (http/get url {:query-params (assoc params "auth_token" auth-token) :throw-exceptions false}))]
+                    (http/get url {:query-params (assoc params "auth_token" auth-token) :throw-exceptions false ::debug-body true}))]
     (if (http/success? response)
       response
       (if (and (too-many-requests? response) (> retries 0))
